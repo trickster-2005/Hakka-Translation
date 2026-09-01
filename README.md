@@ -234,7 +234,7 @@ sudo apt install -y python3 python3-venv python3-pip ffmpeg git
 **3. 取得專案並安裝**
 
 ```bash
-git clone <你的 repo>  ~/hakka-translation   # 或用 scp / rsync / USB 把資料夾複製過去
+git clone https://github.com/trickster-2005/Hakka-Translation.git ~/hakka-translation
 cd ~/hakka-translation
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
@@ -252,19 +252,26 @@ nano .env                                  # 填 TELEGRAM_BOT_TOKEN、ALLOWED_US
 
 **5. 設成開機自動啟動**
 
-編輯 `deploy/hakka-bot.service` 裡的 `User=` 和路徑（預設使用者 `pi`、路徑
-`/home/pi/hakka-translation`，共有 `WorkingDirectory`、`ExecStart`、`ReadWritePaths` 三處），然後：
+用安裝腳本（會自動偵測你的使用者帳號和專案路徑，不用手改）：
 
 ```bash
-sudo cp deploy/hakka-bot.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now hakka-bot
+bash deploy/install.sh
 
-systemctl status hakka-bot          # 看狀態
-journalctl -u hakka-bot -f          # 看即時日誌
+systemctl status hakka-bot --no-pager   # 看狀態
+journalctl -u hakka-bot -f              # 看即時日誌
 ```
 
-之後 bot 會開機自動跑、當掉自動重啟。更新程式後 `sudo systemctl restart hakka-bot`。
+之後 bot 會開機自動跑、當掉自動重啟。
+
+> 手動安裝：`deploy/hakka-bot.service` 是參考範本，把裡面 `__USER__`、`__DIR__`
+> 換成 `id -un` 和 `pwd` 的結果後，複製到 `/etc/systemd/system/` 再
+> `sudo systemctl daemon-reload && sudo systemctl enable --now hakka-bot`。
+
+**更新程式**（之後）：
+
+```bash
+cd ~/hakka-translation && git pull && sudo systemctl restart hakka-bot
+```
 
 > **若 `curl_cffi` 裝不起來**（多半是 Python 太舊或 32 位元舊系統）：升級到
 > Raspberry Pi OS Bookworm（64-bit）最省事；或 `sudo apt install -y
