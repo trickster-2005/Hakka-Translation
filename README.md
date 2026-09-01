@@ -255,7 +255,9 @@ nano .env                                  # 填 TELEGRAM_BOT_TOKEN、ALLOWED_US
 用安裝腳本（會自動偵測你的使用者帳號和專案路徑，不用手改）：
 
 ```bash
-bash deploy/install.sh
+bash deploy/install.sh                # 只裝 bot
+# 或
+bash deploy/install.sh --autoupdate   # 順便裝「定時從 GitHub 自動更新」
 
 systemctl status hakka-bot --no-pager   # 看狀態
 journalctl -u hakka-bot -f              # 看即時日誌
@@ -267,11 +269,17 @@ journalctl -u hakka-bot -f              # 看即時日誌
 > 換成 `id -un` 和 `pwd` 的結果後，複製到 `/etc/systemd/system/` 再
 > `sudo systemctl daemon-reload && sudo systemctl enable --now hakka-bot`。
 
-**更新程式**（之後）：
+**更新程式**
 
-```bash
-cd ~/hakka-translation && git pull && sudo systemctl restart hakka-bot
-```
+- **手動**：`cd ~/hakka-translation && git pull && sudo systemctl restart hakka-bot`
+- **自動**：裝了 `--autoupdate` 後，每 15 分鐘會自己 `git fetch`，有新 commit 就
+  `git reset --hard`、（`requirements.txt` 有變才）重裝套件、重啟 bot。
+  紀錄看 `journalctl -t hakka-autoupdate`。
+  改間隔：`sudo systemctl edit hakka-bot-update.timer` 覆寫 `OnUnitActiveSec`。
+  關掉：`sudo systemctl disable --now hakka-bot-update.timer`。
+
+> 自動更新是**強制對齊 GitHub**（`reset --hard`）—— Pi 上不要直接改被追蹤的檔案，
+> 改動會被蓋掉。設定放在未追蹤的 `.env`，不受影響。
 
 > **若 `curl_cffi` 裝不起來**（多半是 Python 太舊或 32 位元舊系統）：升級到
 > Raspberry Pi OS Bookworm（64-bit）最省事；或 `sudo apt install -y
@@ -308,7 +316,9 @@ Hakka-Translation/
 ├── .gitignore
 ├── run.bat             # Windows 啟動捷徑
 ├── deploy/
-│   └── hakka-bot.service   # Raspberry Pi / Linux 的 systemd 服務範本
+│   ├── install.sh          # 一鍵安裝 systemd 服務（可加 --autoupdate）
+│   ├── autoupdate.sh       # 定時檢查 GitHub 並更新（由 timer 呼叫）
+│   └── hakka-bot.service   # systemd 服務參考範本（手動安裝用）
 ├── README.md
 ├── LICENSE             # MIT
 │
